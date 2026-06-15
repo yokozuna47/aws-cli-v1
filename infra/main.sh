@@ -4,9 +4,10 @@ VPC_ID="vpc-0f7cd0ee42bee14a1"
 
 create_nacl() {
     local nacl_name="$1"
-    aws ec2 create-network-acl \
+    aws_response=$(aws ec2 create-network-acl \
         --vpc-id $VPC_ID \
-        --tag-specifications "ResourceType=network-acl,Tags=[{Key=Name,Value=$nacl_name}]"
+        --tag-specifications "ResourceType=network-acl,Tags=[{Key=Name,Value=$nacl_name}]")
+    echo "$aws_response" > nacl.json
 }
 
 delete_nacl() {
@@ -19,8 +20,28 @@ delete_nacl() {
     aws ec2 delete-network-acl --network-acl-id "$nacl_id"
 }
 
-case "$1" in
-    create) create_nacl "$2" ;;
-    delete) delete_nacl "$2" ;;
-    *) echo "Usage: $0 {create|delete} <nacl_name>" ;;
-esac
+create_ingress_rule() {
+    local network_acl_id="$1"
+    local rule_number="$2"
+    local protocol="${3:-6}"
+    local from="${4:-443}"
+    local to="${5:-443}"
+    local rule_action="${6:-deny}"
+
+    aws ec2 create-network-acl-entry \
+        --network-acl-id "$network_acl_id" \
+        --rule-number "$rule_number" \
+        --protocol "$protocol" \
+        --port-range From="$from",To="$to" \
+        --cidr-block 0.0.0.0/0 \
+        --rule-action "$rule_action" \
+        --ingress
+}
+
+# --- Programme principal ---
+
+create_nacl "$1"
+
+network_acl_id=$(jq -r '.NetworkAcl.NetworkAclId' nacl.json)
+
+create_ingress_rule "$network_acl_id" 100 6 443 443 allow

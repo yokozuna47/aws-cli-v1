@@ -30,3 +30,4 @@ venv/
 .venv/
 awscliv2.zip
 aws/
+nacl.json
