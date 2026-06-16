@@ -1,6 +1,6 @@
 # Compte rendu — TD Sécurité réseau AWS (Jour 1)
 
-**Étudiant :** yokozuna · Mastère Cybersécurité — BC Design Systems / IPSSI
+**Étudiant :** Issiakha · Mastère Cybersécurité — BC Design Systems / IPSSI
 **Objet :** VPC par défaut, bastion + cible, Security Groups (stateful) & NACL (stateless), défense en profondeur.
 **Région :** `us-east-1` (j'ai basculé depuis `eu-west-3` sur consigne du formateur — quota vCPU saturé).
 
