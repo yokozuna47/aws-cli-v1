@@ -1,6 +1,6 @@
-resource "aws_security_group" "yokozuna_sg" {
-  name        = "yokozuna_sg"
-  description = "Security group yokozuna"
+resource "aws_security_group" "jilani_sg" {
+  name        = "jilani_sg"
+  description = "Security group jilani"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -25,33 +25,33 @@ resource "aws_security_group" "yokozuna_sg" {
   }
 
   tags = {
-    Name = "yokozuna_sg"
+    Name = "jilani_sg"
   }
 }
 
-resource "aws_subnet" "yokozuna_subnet" {
+resource "aws_subnet" "jilani_subnet" {
   vpc_id     = var.vpc_id
-  cidr_block = "172.31.10.0/24"
+  cidr_block = "172.31.30.0/24"
 
   tags = {
-    Name = "yokozuna_subnet"
+    Name = "jilani_subnet"
   }
 }
 
-resource "aws_key_pair" "yokozuna_key" {
-  key_name   = "yokozuna_key"
-  public_key = file(pathexpand("~/.ssh/yokozuna_key.pub"))
+resource "aws_key_pair" "jilani_key" {
+  key_name   = "jilani_key"
+  public_key = file(pathexpand("~/.ssh/jilani_key.pub"))
 }
 
-resource "aws_instance" "yokozuna_serverweb" {
+resource "aws_instance" "jilani_serverweb" {
   ami                         = var.vm_image
   instance_type               = var.vm_instance_type
   associate_public_ip_address = true
-  subnet_id                   = aws_subnet.yokozuna_subnet.id
-  vpc_security_group_ids      = [aws_security_group.yokozuna_sg.id]
-  key_name                    = aws_key_pair.yokozuna_key.key_name
+  subnet_id                   = aws_subnet.jilani_subnet.id
+  vpc_security_group_ids      = [aws_security_group.jilani_sg.id]
+  key_name                    = aws_key_pair.jilani_key.key_name
 
   tags = {
-    Name = "yokozuna_serverweb"
+    Name = "jilani_serverweb"
   }
 }
