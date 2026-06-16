@@ -1,0 +1,34 @@
+# Credentials & secrets
+.env
+.env.*
+*.pem
+*.key
+.aws/
+credentials
+aws-credentials*
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+!example.tfvars
+
+# Logs & temp
+*.log
+*.tmp
+tmp/
+
+# OS / éditeur
+.DS_Store
+Thumbs.db
+
+# Python (si utilisé)
+__pycache__/
+*.pyc
+venv/
+.venv/
+awscliv2.zip
+aws/
+nacl.json
+nacl.json
