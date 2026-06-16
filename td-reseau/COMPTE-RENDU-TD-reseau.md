@@ -61,7 +61,6 @@
   "ReferencedGroupInfo": { "GroupId": "sg-0e9638fb0e2013975" } }
 ```
 
-> _Capture(s) d'écran de mon terminal à insérer ici (création des règles SG et entrées NACL)._
 
 ## 3. Mes réponses aux questions
 
