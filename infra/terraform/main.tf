@@ -31,7 +31,7 @@ resource "aws_security_group" "musin_sg" {
 
 resource "aws_subnet" "musin_subnet" {
   vpc_id     = var.vpc_id
-  cidr_block = "172.31.40.0/24"
+  cidr_block = "172.31.40.2/24"
 
   tags = {
     Name = "musin_subnet"
