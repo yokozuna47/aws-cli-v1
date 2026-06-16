@@ -31,7 +31,7 @@ resource "aws_security_group" "jilani_sg" {
 
 resource "aws_subnet" "jilani_subnet" {
   vpc_id     = var.vpc_id
-  cidr_block = "172.31.30.0/24"
+  cidr_block = "172.31.70.0/24"
 
   tags = {
     Name = "jilani_subnet"
