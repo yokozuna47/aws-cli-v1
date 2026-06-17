@@ -1,0 +1,20 @@
+- name: Installer nginx
+  hosts: web
+  become: true
+  tasks:
+    - name: Installer le paquet nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: true
+
+    - name: Démarrer et activer nginx
+      service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Update landing page
+      copy:
+        content: "Time Is Illmatic"
+        dest: /var/www/html/index.html
