@@ -1,6 +1,6 @@
-resource "aws_security_group" "yokozuna_sg" {
-  name        = "yokozuna_sg"
-  description = "Security group yokozuna"
+resource "aws_security_group" "musin_sg" {
+  name        = "musin_sg"
+  description = "Security group musin"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -25,33 +25,33 @@ resource "aws_security_group" "yokozuna_sg" {
   }
 
   tags = {
-    Name = "yokozuna_sg"
+    Name = "musin_sg"
   }
 }
 
-resource "aws_subnet" "yokozuna_subnet" {
+resource "aws_subnet" "musin_subnet" {
   vpc_id     = var.vpc_id
   cidr_block = "172.31.10.0/24"
 
   tags = {
-    Name = "yokozuna_subnet"
+    Name = "musin_subnet"
   }
 }
 
-resource "aws_key_pair" "yokozuna_key" {
-  key_name   = "yokozuna_key"
-  public_key = file(pathexpand("~/.ssh/yokozuna_key.pub"))
+resource "aws_key_pair" "musin_key" {
+  key_name   = "musin_key"
+  public_key = file(pathexpand("~/.ssh/musin_key.pub"))
 }
 
-resource "aws_instance" "yokozuna_serverweb" {
+resource "aws_instance" "musin_serverweb" {
   ami                         = var.vm_image
   instance_type               = var.vm_instance_type
   associate_public_ip_address = true
-  subnet_id                   = aws_subnet.yokozuna_subnet.id
-  vpc_security_group_ids      = [aws_security_group.yokozuna_sg.id]
-  key_name                    = aws_key_pair.yokozuna_key.key_name
+  subnet_id                   = aws_subnet.musin_subnet.id
+  vpc_security_group_ids      = [aws_security_group.musin_sg.id]
+  key_name                    = aws_key_pair.musin_key.key_name
 
   tags = {
-    Name = "yokozuna_serverweb"
+    Name = "musin_serverweb"
   }
 }

@@ -19,4 +19,3 @@ variable "vm_instance_type" {
   description = "Instance type for VMs"
   default     = "t2.micro"
 }
-
