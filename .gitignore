@@ -32,3 +32,4 @@ awscliv2.zip
 aws/
 nacl.json
 nacl.json
+infra/ansible/inventory.ini
