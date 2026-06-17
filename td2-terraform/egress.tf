@@ -16,7 +16,7 @@ resource "aws_eip" "nat" {
 # NAT Gateway dans le subnet PUBLIC (elle a besoin de l'IGW)
 resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.nat.id
-  subnet_id     = data.aws_subnet.public_a.id
+  subnet_id     = aws_subnet.public_a.id
   tags          = { Name = "td2-nat-${var.student_id}" }
 }
 

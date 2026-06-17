@@ -1,19 +1,19 @@
 variable "aws_region" {
   description = "Region AWS"
   type        = string
-  default     = "eu-west-3"
+  default     = "us-east-1"
 }
 
 variable "student_id" {
   description = "Numero d'etudiant (0-99) -> noms et CIDR uniques"
   type        = number
-  default     = 47
+  default     = 22
 }
 
 variable "key_name" {
   description = "Nom de la paire de cles EC2 existante"
   type        = string
-  default     = "cle-td2-yokozuna"
+  default     = "cle-td2-jilani"
 }
 
 variable "my_ip" {

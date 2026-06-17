@@ -1,8 +1,8 @@
 # Compte rendu — TD2 : Filtrage réseau & IDS en Terraform
 
-**Étudiant :** yokozuna (n° 47) · Mastère Cybersécurité — BC Design Systems / IPSSI
+**Étudiant :** jilani (n° 22) · Mastère Cybersécurité — BC Design Systems / IPSSI
 **Objet :** déployer en **Terraform** un bastion (filtrage entrant), une instance privée sortant via **NAT Gateway** (filtrage sortant), et une sonde **Suricata** (détection d'intrusion).
-**Région :** eu-west-3 · **VPC par défaut** lu en data source (jamais modifié).
+**Région :** `us-east-1` (bascule depuis `eu-west-3` — quota vCPU saturé, même problème qu'au TD1) · **VPC par défaut** lu en data source (jamais modifié).
 
 ---
 
@@ -44,32 +44,32 @@
 **Déploiement Terraform** (`terraform apply`) — outputs obtenus :
 
 ```
-Apply complete! Resources: 7 added, 0 changed, 0 destroyed.
+Apply complete! Resources: 13 added, 0 changed, 0 destroyed.
 Outputs:
-bastion_public_ip = "35.180.123.244"
-private_ip        = "172.31.147.75"
-sonde_private_ip  = "172.31.199.147"
+bastion_public_ip = "13.220.141.192"
+private_ip        = "172.31.122.93"
+sonde_private_ip  = "172.31.80.196"
 ```
 
 **Filtrage sortant (NAT)** — depuis l'instance privée (`172.31.147.75`, sans IP publique) :
 
 ```
-ubuntu@ip-172-31-147-75:~$ curl https://checkip.amazonaws.com
-35.181.110.247
+ubuntu@ip-172-31-122-93:~$ curl https://checkip.amazonaws.com
+50.17.113.129
 ```
 
-→ `35.181.110.247` = l'**EIP de la NAT Gateway** (confirmé par `aws ec2 describe-addresses`). La privée sort vers Internet via la NAT, sans être joignable de l'extérieur.
+→ `50.17.113.129` = l'**EIP de la NAT Gateway** (confirmé par `aws ec2 describe-addresses`). La privée sort vers Internet via la NAT, sans être joignable de l'extérieur.
 
 **Détection Suricata (IDS)** — `ping` depuis le bastion vers la sonde, puis lecture de `/var/log/suricata/fast.log` :
 
 ```
-ubuntu@ip-172-31-199-147:~$ sudo cloud-init status
+ubuntu@ip-172-31-80-196:~$ sudo cloud-init status
 status: done
-ubuntu@ip-172-31-199-147:~$ sudo systemctl is-active suricata
+ubuntu@ip-172-31-80-196:~$ sudo systemctl is-active suricata
 active
-ubuntu@ip-172-31-199-147:~$ sudo grep "TD2 ICMP" /var/log/suricata/fast.log
-[1:1000001:1] TD2 ICMP detecte [**] {ICMP} 172.31.207.104:8 -> 172.31.199.147:0
-[1:1000001:1] TD2 ICMP detecte [**] {ICMP} 172.31.199.147:0 -> 172.31.207.104:0
+ubuntu@ip-172-31-80-196:~$ sudo grep "TD2 ICMP" /var/log/suricata/fast.log
+06/17/2026-15:17:56.145569 [**] [1:1000001:1] TD2 ICMP detecte [**] [Classification: (null)] [Priority: 3] {ICMP} 172.31.80.130:8 -> 172.31.80.196:0
+06/17/2026-15:17:56.145644 [**] [1:1000001:1] TD2 ICMP detecte [**] [Classification: (null)] [Priority: 3] {ICMP} 172.31.80.196:0 -> 172.31.80.130:0
 ```
 
 La règle (sid 1000001) ajoutée via `user_data` est chargée et lève une alerte sur chaque ping (echo request du bastion + echo reply).
