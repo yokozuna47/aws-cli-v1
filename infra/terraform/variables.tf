@@ -20,3 +20,7 @@ variable "vm_instance_type" {
   default     = "t2.micro"
 }
 
+variable "admin_ip" {
+  type        = string
+  description = "Ton IP publique personnelle pour SSH vers le bastion (sans /32, ex: 203.0.113.42)"
+}
