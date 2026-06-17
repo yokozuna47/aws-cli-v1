@@ -39,21 +39,46 @@
 - **egress.tf** — sous-réseau privé, Elastic IP, **NAT Gateway** (dans le public), route table privée `0.0.0.0/0 → NAT`, SG privé (SSH depuis bastion), instance privée (sans IP publique).
 - **suricata.tf** — SG sonde (SSH + ICMP depuis bastion) + instance sonde avec **`user_data`** installant Suricata et la règle d'alerte ICMP.
 
-## 3. Preuves de fonctionnement
+## 3. Preuves de fonctionnement (sorties terminal)
 
-**Filtrage sortant (NAT)** — depuis l'instance privée (`172.31.147.75`, sans IP publique) :
-`curl https://checkip.amazonaws.com` → **35.181.110.247** = l'EIP de la NAT Gateway. La privée sort bien vers Internet via la NAT, sans être joignable de l'extérieur.
-
-**Détection Suricata (IDS)** — après `ping` depuis le bastion vers la sonde, dans `/var/log/suricata/fast.log` :
+**Déploiement Terraform** (`terraform apply`) — outputs obtenus :
 
 ```
+Apply complete! Resources: 7 added, 0 changed, 0 destroyed.
+Outputs:
+bastion_public_ip = "35.180.123.244"
+private_ip        = "172.31.147.75"
+sonde_private_ip  = "172.31.199.147"
+```
+
+**Filtrage sortant (NAT)** — depuis l'instance privée (`172.31.147.75`, sans IP publique) :
+
+```
+ubuntu@ip-172-31-147-75:~$ curl https://checkip.amazonaws.com
+35.181.110.247
+```
+
+→ `35.181.110.247` = l'**EIP de la NAT Gateway** (confirmé par `aws ec2 describe-addresses`). La privée sort vers Internet via la NAT, sans être joignable de l'extérieur.
+
+**Détection Suricata (IDS)** — `ping` depuis le bastion vers la sonde, puis lecture de `/var/log/suricata/fast.log` :
+
+```
+ubuntu@ip-172-31-199-147:~$ sudo cloud-init status
+status: done
+ubuntu@ip-172-31-199-147:~$ sudo systemctl is-active suricata
+active
+ubuntu@ip-172-31-199-147:~$ sudo grep "TD2 ICMP" /var/log/suricata/fast.log
 [1:1000001:1] TD2 ICMP detecte [**] {ICMP} 172.31.207.104:8 -> 172.31.199.147:0
 [1:1000001:1] TD2 ICMP detecte [**] {ICMP} 172.31.199.147:0 -> 172.31.207.104:0
 ```
 
-La règle (sid 1000001) ajoutée via `user_data` est chargée et lève une alerte sur chaque ping.
+La règle (sid 1000001) ajoutée via `user_data` est chargée et lève une alerte sur chaque ping (echo request du bastion + echo reply).
 
-> _Captures à insérer : le `terraform apply` réussi et l'alerte « TD2 ICMP detecte »._
+**Nettoyage** (`terraform destroy`) — Partie 5 obligatoire :
+
+```
+Destroy complete! Resources: 11 destroyed.
+```
 
 ## 4. Réponses aux questions
 
