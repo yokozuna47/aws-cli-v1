@@ -10,7 +10,7 @@
 
 ```
                  Internet
-                    │  SSH (22) depuis MON IP : 91.174.53.22/32
+                    │  SSH (22) depuis MON IP : 82.96.161.255/32
                     ▼
         ┌───────────────────────────────────────────────┐
         │  VPC par défaut  172.31.0.0/16                  │
@@ -22,34 +22,34 @@
         │   ┌────────────────┐        ┌────────────────┐  │
         │   │   BASTION       │  SSH   │    CIBLE       │  │
         │   │ IP publique     │  +ping │ PAS d'IP       │  │
-        │   │ 54.209.132.74   │──────► │ publique       │  │
-        │   │ priv .211.127   │        │ priv .211.40   │  │
+        │   │ 44.214.139.48   │──────► │ publique       │  │
+        │   │ priv .211.22    │        │ priv .211.172  │  │
         │   │ [sg-bastion]    │        │ [sg-cible]     │  │
         │   └────────────────┘        └────────────────┘  │
         └───────────────────────────────────────────────┘
 
- sg-bastion-jilani : entrée SSH(22) depuis 91.174.53.22/32
+ sg-bastion-jilani : entrée SSH(22) depuis 82.96.161.255/32
  sg-cible-jilani   : entrée SSH(22) + ICMP dont la SOURCE = sg-bastion-jilani (pas une IP)
 ```
 
 ## 2. Règles appliquées
 
-**Security Group `sg-bastion-jilani`** — entrée : TCP 22 depuis `91.174.53.22/32`.
+**Security Group `sg-bastion-jilani`** — entrée : TCP 22 depuis `82.96.161.255/32`.
 **Security Group `sg-cible-jilani`** — entrée : TCP 22 + ICMP, source = `sg-bastion-jilani`.
 
 **NACL `td-nacl-jilani`** (sur le sous-réseau dédié) :
 
 | N°  | Sens    | Protocole | Ports        | Source/Dest       | Action |
 |-----|---------|-----------|--------------|-------------------|--------|
-| 90  | entrant | TCP       | 22           | 91.174.53.22/32   | DENY *(test §défense, puis retirée)* |
-| 100 | entrant | TCP       | 22           | 91.174.53.22/32   | ALLOW  |
+| 90  | entrant | TCP       | 22           | 82.96.161.255/32   | DENY *(test §défense, puis retirée)* |
+| 100 | entrant | TCP       | 22           | 82.96.161.255/32   | ALLOW  |
 | 100 | sortant | TCP       | 1024–65535   | 0.0.0.0/0         | ALLOW *(trafic retour)* |
 
 > _Captures d'écran à insérer ici : console SG (règles entrantes) et console NACL (règles entrantes/sortantes)._
 
 ## 3. Réponses aux questions
 
-**Instances** — Seul le **bastion** est joignable depuis Internet (IP publique + route via l'IGW) ; la cible, sans IP publique, n'est atteignable que **par rebond depuis le bastion** sur son IP privée `172.31.211.40`.
+**Instances** — Seul le **bastion** est joignable depuis Internet (IP publique + route via l'IGW) ; la cible, sans IP publique, n'est atteignable que **par rebond depuis le bastion** sur son IP privée `172.31.211.172`.
 
 **Security Groups** — On prend `sg-bastion-jilani` comme source plutôt qu'une IP car la règle **suit les instances** du groupe (IP changeantes, plusieurs bastions possibles). La réponse repart sans règle de sortie car le SG est **stateful** : il autorise automatiquement le trafic retour.
 

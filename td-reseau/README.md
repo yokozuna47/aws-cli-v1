@@ -16,15 +16,15 @@ par un Security Group (niveau instance, *stateful*) **et** une NACL (niveau sous
 
 | Ressource              | Identifiant                  | Détail                                        |
 |------------------------|------------------------------|-----------------------------------------------|
-| VPC par défaut         | `vpc-0a3f1c2d4e5b6a7f8`      | 172.31.0.0/16 (non modifié)                   |
-| Sous-réseau dédié      | `subnet-0b4e2f3a1c6d7e8f9`   | 172.31.211.0/24, us-east-1a                   |
+| VPC par défaut         | `vpc-0f7cd0ee42bee14a1`      | 172.31.0.0/16 (non modifié)                   |
+| Sous-réseau dédié      | `subnet-04bf069e551990159`   | 172.31.211.0/24, us-east-1a                   |
 | Paire de clés          | `cle-td-jilani`              | fichier `cle-td-jilani.pem`                   |
-| Instance **bastion**   | `i-0a1b2c3d4e5f6a7b8`        | priv 172.31.211.127 / pub 54.209.132.74       |
-| Instance **cible**     | `i-0f9e8d7c6b5a4f3e2`        | priv 172.31.211.40 / pas d'IP publique        |
-| SG bastion             | `sg-0c1d2e3f4a5b6c7d8`       | `td-bastion-jilani`                           |
-| SG cible               | `sg-0e9f8a7b6c5d4e3f2`       | `td-cible-jilani`                             |
-| NACL personnalisée     | `acl-0d1e2f3a4b5c6d7e8`      | `td-nacl-jilani`                              |
-| NACL par défaut        | `acl-0f2a3b4c5d6e7f8a9`      | réassociée à la fin (non supprimée)           |
+| Instance **bastion**   | `i-0e343a1b2cbc329cb`        | priv 172.31.211.22 / pub 44.214.139.48       |
+| Instance **cible**     | `i-05845ed242795ba7b`        | priv 172.31.211.172 / pas d'IP publique        |
+| SG bastion             | `sg-055ec473851b03c44`       | `td-bastion-jilani`                           |
+| SG cible               | `sg-0611569c3887fba91`       | `td-cible-jilani`                             |
+| NACL personnalisée     | `acl-0004f2c0a3560ad07`      | `td-nacl-jilani`                              |
+| NACL par défaut        | `acl-029b01c2ab02ecb0d`      | réassociée à la fin (non supprimée)           |
 
 > J'ai créé un sous-réseau **dédié** (plutôt qu'un sous-réseau par défaut partagé) pour que
 > ma NACL personnalisée n'impacte que mes propres instances, sans gêner mes camarades.
@@ -33,7 +33,7 @@ par un Security Group (niveau instance, *stateful*) **et** une NACL (niveau sous
 
 ### 1. Prérequis
 ```bash
-curl https://checkip.amazonaws.com            # -> MON IP = 91.174.53.22/32
+curl https://checkip.amazonaws.com            # -> MON IP = 82.96.161.255/32
 aws configure set region us-east-1            # bascule de région
 aws ec2 create-key-pair --key-name cle-td-jilani \
   --query "KeyMaterial" --output text > cle-td-jilani.pem
@@ -49,18 +49,18 @@ aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
 ### 3. Lancer les deux instances
 ```bash
 # sous-réseau dédié
-aws ec2 create-subnet --vpc-id vpc-0a3f1c2d4e5b6a7f8 \
+aws ec2 create-subnet --vpc-id vpc-0f7cd0ee42bee14a1 \
   --cidr-block 172.31.211.0/24 --availability-zone us-east-1a \
   --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=td-jilani-subnet}]'
 
 # bastion (AVEC IP publique) et cible (SANS IP publique)
-aws ec2 run-instances --image-id ami-0c02fb55956c7d316 --instance-type t3.micro \
-  --key-name cle-td-jilani --subnet-id subnet-0b4e2f3a1c6d7e8f9 \
+aws ec2 run-instances --image-id ami-0521cb2d60cfbb1a6 --instance-type t3.micro \
+  --key-name cle-td-jilani --subnet-id subnet-04bf069e551990159 \
   --associate-public-ip-address \
   --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=td-bastion}]'
 
-aws ec2 run-instances --image-id ami-0c02fb55956c7d316 --instance-type t3.micro \
-  --key-name cle-td-jilani --subnet-id subnet-0b4e2f3a1c6d7e8f9 \
+aws ec2 run-instances --image-id ami-0521cb2d60cfbb1a6 --instance-type t3.micro \
+  --key-name cle-td-jilani --subnet-id subnet-04bf069e551990159 \
   --no-associate-public-ip-address \
   --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=td-cible}]'
 ```
@@ -68,32 +68,32 @@ aws ec2 run-instances --image-id ami-0c02fb55956c7d316 --instance-type t3.micro 
 ### 4. Security Groups (stateful)
 ```bash
 # sg-bastion : j'autorise SSH depuis MON IP uniquement
-aws ec2 authorize-security-group-ingress --group-id sg-0c1d2e3f4a5b6c7d8 \
-  --protocol tcp --port 22 --cidr 91.174.53.22/32
+aws ec2 authorize-security-group-ingress --group-id sg-055ec473851b03c44 \
+  --protocol tcp --port 22 --cidr 82.96.161.255/32
 
 # sg-cible : SSH + ICMP dont la SOURCE est sg-bastion (pas une plage d'IP)
-aws ec2 authorize-security-group-ingress --group-id sg-0e9f8a7b6c5d4e3f2 \
-  --protocol tcp --port 22 --source-group sg-0c1d2e3f4a5b6c7d8
-aws ec2 authorize-security-group-ingress --group-id sg-0e9f8a7b6c5d4e3f2 \
-  --protocol icmp --port -1 --source-group sg-0c1d2e3f4a5b6c7d8
+aws ec2 authorize-security-group-ingress --group-id sg-0611569c3887fba91 \
+  --protocol tcp --port 22 --source-group sg-055ec473851b03c44
+aws ec2 authorize-security-group-ingress --group-id sg-0611569c3887fba91 \
+  --protocol icmp --port -1 --source-group sg-055ec473851b03c44
 ```
 Mon test (j'ai utilisé l'agent forwarding pour rebondir vers la cible) :
 ```bash
 ssh-add cle-td-jilani.pem
-ssh -A -i cle-td-jilani.pem ec2-user@54.209.132.74   # bastion
+ssh -A -i cle-td-jilani.pem ec2-user@44.214.139.48   # bastion
 # depuis le bastion :
-ping -c 3 172.31.211.40            # OK (ICMP via sg-bastion)
-ssh ec2-user@172.31.211.40         # OK (SSH via sg-bastion) -> réponse auto (stateful)
+ping -c 3 172.31.211.172            # OK (ICMP via sg-bastion)
+ssh ec2-user@172.31.211.172         # OK (SSH via sg-bastion) -> réponse auto (stateful)
 ```
 
 ### 5. NACL (stateless)
 ```bash
 # j'autorise l'entrée SSH...
-aws ec2 create-network-acl-entry --network-acl-id acl-0d1e2f3a4b5c6d7e8 \
+aws ec2 create-network-acl-entry --network-acl-id acl-0004f2c0a3560ad07 \
   --rule-number 100 --protocol 6 --port-range From=22,To=22 \
-  --cidr-block 91.174.53.22/32 --rule-action allow --ingress
+  --cidr-block 82.96.161.255/32 --rule-action allow --ingress
 # ...mais le SSH reste BLOQUÉ tant que je n'autorise pas le retour en sortie :
-aws ec2 create-network-acl-entry --network-acl-id acl-0d1e2f3a4b5c6d7e8 \
+aws ec2 create-network-acl-entry --network-acl-id acl-0004f2c0a3560ad07 \
   --rule-number 100 --protocol 6 --port-range From=1024,To=65535 \
   --cidr-block 0.0.0.0/0 --rule-action allow --egress   # -> SSH passe
 ```
@@ -101,26 +101,26 @@ aws ec2 create-network-acl-entry --network-acl-id acl-0d1e2f3a4b5c6d7e8 \
 ### 6. Défense en profondeur
 ```bash
 # j'ajoute une règle DENY n°90 (prioritaire sur la 100) -> SSH refusé malgré le SG
-aws ec2 create-network-acl-entry --network-acl-id acl-0d1e2f3a4b5c6d7e8 \
+aws ec2 create-network-acl-entry --network-acl-id acl-0004f2c0a3560ad07 \
   --rule-number 90 --protocol 6 --port-range From=22,To=22 \
-  --cidr-block 91.174.53.22/32 --rule-action deny --ingress
+  --cidr-block 82.96.161.255/32 --rule-action deny --ingress
 # je la supprime -> accès rétabli
-aws ec2 delete-network-acl-entry --network-acl-id acl-0d1e2f3a4b5c6d7e8 \
+aws ec2 delete-network-acl-entry --network-acl-id acl-0004f2c0a3560ad07 \
   --rule-number 90 --ingress
 ```
 
 ### 7. Nettoyage
 ```bash
-aws ec2 terminate-instances --instance-ids i-0a1b2c3d4e5f6a7b8 i-0f9e8d7c6b5a4f3e2
-aws ec2 wait instance-terminated --instance-ids i-0a1b2c3d4e5f6a7b8 i-0f9e8d7c6b5a4f3e2
+aws ec2 terminate-instances --instance-ids i-0e343a1b2cbc329cb i-05845ed242795ba7b
+aws ec2 wait instance-terminated --instance-ids i-0e343a1b2cbc329cb i-05845ed242795ba7b
 # je rétablis la NACL par défaut puis je supprime ma NACL custom
-aws ec2 replace-network-acl-association --association-id aclassoc-0a1b2c3d4e5f6a7b8 \
-  --network-acl-id acl-0f2a3b4c5d6e7f8a9
-aws ec2 delete-network-acl --network-acl-id acl-0d1e2f3a4b5c6d7e8
+aws ec2 replace-network-acl-association --association-id aclassoc-0ceac77dd49456ae2 \
+  --network-acl-id acl-029b01c2ab02ecb0d
+aws ec2 delete-network-acl --network-acl-id acl-0004f2c0a3560ad07
 # SG (cible d'abord car elle référence le bastion), puis subnet et clés
-aws ec2 delete-security-group --group-id sg-0e9f8a7b6c5d4e3f2
-aws ec2 delete-security-group --group-id sg-0c1d2e3f4a5b6c7d8
-aws ec2 delete-subnet --subnet-id subnet-0b4e2f3a1c6d7e8f9
+aws ec2 delete-security-group --group-id sg-0611569c3887fba91
+aws ec2 delete-security-group --group-id sg-055ec473851b03c44
+aws ec2 delete-subnet --subnet-id subnet-04bf069e551990159
 aws ec2 delete-key-pair --key-name cle-td-jilani
 ```
 J'ai laissé **intacts** le VPC par défaut, ses sous-réseaux, son IGW et la NACL par défaut.
@@ -132,7 +132,7 @@ J'ai laissé **intacts** le VPC par défaut, ses sous-réseaux, son IGW et la NA
    sous-réseau a une route `0.0.0.0/0` vers l'Internet Gateway. La cible n'a pas d'IP
    publique, donc rien ne peut l'atteindre directement depuis l'extérieur.
 2. J'atteins la cible **par rebond depuis le bastion** (hôte intermédiaire), en SSH via son
-   IP privée `172.31.211.40`.
+   IP privée `172.31.211.172`.
 
 **Partie 3 — Security Groups**
 1. Je définis la source du sg-cible comme `sg-bastion` plutôt qu'une IP : la règle **suit
@@ -166,7 +166,7 @@ J'ai laissé **intacts** le VPC par défaut, ses sous-réseaux, son IGW et la NA
    peut **détourner mon agent** pour s'authentifier ailleurs avec mes clés. La bonne pratique
    est d'utiliser **ProxyJump** :
    ```bash
-   ssh -J ec2-user@54.209.132.74 ec2-user@172.31.211.40
+   ssh -J ec2-user@44.214.139.48 ec2-user@172.31.211.172
    ```
 2. **Règle NACL sortante trop large.** L'egress `1024-65535 → 0.0.0.0/0` est nécessaire
    (stateless), mais laisse le sous-réseau sortir vers n'importe quelle destination. En
