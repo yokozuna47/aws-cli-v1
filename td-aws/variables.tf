@@ -26,7 +26,7 @@ variable "db_username" {
 }
 variable "db_schema" {
   description = "Mon schema PostgreSQL pour m'isoler des autres etudiants"
-  default     = "yokozuna47"
+  default     = "jilani22"
 }
 variable "db_password" {
   description = "Mot de passe RDS partage - via TF_VAR_db_password"
