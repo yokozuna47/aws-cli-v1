@@ -1,4 +1,7 @@
-CREATE TABLE IF NOT EXISTS users (
+-- Isolation : chaque etudiant travaille dans SON schema (espace de noms).
+CREATE SCHEMA IF NOT EXISTS yokozuna47;
+
+CREATE TABLE IF NOT EXISTS yokozuna47.users (
     id            SERIAL PRIMARY KEY,
     email         VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,   -- jamais de mot de passe en clair

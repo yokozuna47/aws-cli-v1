@@ -3,7 +3,7 @@ import re
 import hashlib
 import secrets
 import psycopg2
-from psycopg2 import errors
+from psycopg2 import errors, sql
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
@@ -15,6 +15,7 @@ DB_CONFIG = {
     "password": os.environ["DB_PASSWORD"],
     "port": 5432,
 }
+DB_SCHEMA = os.environ.get("DB_SCHEMA", "public")
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -38,24 +39,26 @@ def signup():
     password = data.get("password") or ""
     full_name = (data.get("full_name") or "").strip()
 
-    # TODO 1 -> validation
+    # validation
     if not email or not EMAIL_RE.match(email):
         return jsonify({"error": "email invalide"}), 400
     if not password:
         return jsonify({"error": "mot de passe requis"}), 400
 
-    # TODO 2 -> hachage (jamais de mot de passe en clair)
+    # hachage (jamais de mot de passe en clair)
     password_hash = hash_password(password)
 
-    # TODO 3 -> INSERT parametre (anti-injection SQL) + gestion du doublon
+    # INSERT parametre (anti-injection) dans le schema dedie.
+    # Le nom de schema est injecte via sql.Identifier (pas une simple concat).
+    query = sql.SQL(
+        "INSERT INTO {}.users (email, password_hash, full_name) VALUES (%s, %s, %s)"
+    ).format(sql.Identifier(DB_SCHEMA))
+
     conn = None
     try:
         conn = psycopg2.connect(**DB_CONFIG)
         with conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO users (email, password_hash, full_name) VALUES (%s, %s, %s)",
-                (email, password_hash, full_name),
-            )
+            cur.execute(query, (email, password_hash, full_name))
         conn.commit()
     except errors.UniqueViolation:
         if conn:

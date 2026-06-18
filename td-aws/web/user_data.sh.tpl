@@ -45,14 +45,12 @@ def form():
 
 @app.post("/signup")
 def signup():
-    # TODO 1 -> recuperer les champs du formulaire
     payload = {
         "full_name": request.form.get("full_name", ""),
         "email": request.form.get("email", ""),
         "password": request.form.get("password", ""),
     }
 
-    # TODO 2 -> relayer vers l'API interne (avec timeout)
     try:
         r = requests.post(APP_API_URL, json=payload, timeout=5)
     except requests.RequestException:
@@ -60,7 +58,6 @@ def signup():
             RESULT, titre="Service indisponible",
             message="Impossible de joindre l'API."), 502
 
-    # TODO 3 -> message selon le code retour
     if r.status_code == 201:
         return render_template_string(
             RESULT, titre="Compte cree",
